@@ -5,7 +5,6 @@
     </div>
     <div style="flex: 1;text-align: center;font-size: 30px;">
       <span>pms</span>
-      <el-tag size="medium" type="success" style="display: inline-block; margin-left: 10px;">{{user.lab}}</el-tag>
     </div>
     <el-dropdown>
       <span>{{user.name}}</span><i class="el-icon-arrow-down" style="margin-left: 5px;"></i>
