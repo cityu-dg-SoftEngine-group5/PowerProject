@@ -63,7 +63,7 @@
       </el-table-column>
       <el-table-column prop="phone" label="电话" width="180">
       </el-table-column>
-      <el-table-column prop="lab" label="实验室" width="180">
+      <el-table-column prop="lab" label="项目组" width="180">
       </el-table-column>
       <el-table-column prop="operate" label="操作">
         <template slot-scope="scope">
@@ -133,7 +133,7 @@
             <el-input v-model="form.phone"></el-input>
           </el-col>
         </el-form-item>
-        <el-form-item label="实验室" prop="lab">
+        <el-form-item label="项目组" prop="lab">
           <el-col :span="20">
             <el-input v-model="form.lab"></el-input>
           </el-col>
