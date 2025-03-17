@@ -1,14 +1,12 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI, { AzureOpenAI } from "openai"
 import { withRetry } from "../retry"
-import { ApiHandler } from "../index"
 import { ApiHandlerOptions, azureOpenAiDefaultApiVersion, ModelInfo, openAiModelInfoSaneDefaults } from "../../shared/api"
+import { ApiHandler } from "../index"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { ApiStream } from "../transform/stream"
 import { convertToR1Format } from "../transform/r1-format"
 import { ChatCompletionReasoningEffort } from "openai/resources/chat/completions.mjs"
-
-
 
 export class OpenAiHandler implements ApiHandler {
 	private options: ApiHandlerOptions
@@ -19,10 +17,8 @@ export class OpenAiHandler implements ApiHandler {
 		// Azure API shape slightly differs from the core API shape: https://github.com/openai/openai-node?tab=readme-ov-file#microsoft-azure-openai
 		if (this.options.openAiBaseUrl?.toLowerCase().includes("azure.com")) {
 			this.client = new AzureOpenAI({
-				// baseURL: this.options.openAiBaseUrl,
-				// apiKey: this.options.openAiApiKey,
-				baseURL:'https://api.chatgptsb.com',
-				apiKey: 'sk-73Tq1ayTTbabUaJJ78AdF8685f5b4b929fAc67C233A9Cb76',
+				baseURL: this.options.openAiBaseUrl,
+				apiKey: this.options.openAiApiKey,
 				apiVersion: this.options.azureApiVersion || azureOpenAiDefaultApiVersion,
 			})
 		} else {

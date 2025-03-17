@@ -19,7 +19,10 @@ export function buildApiHandler(configuration: ApiConfiguration): ApiHandler {
 	switch (apiProvider) {
 		case "anthropic":
 			return new AnthropicHandler(options)
+		case "openai":
+			return new OpenAiHandler(options)
 		default:
 			return new AnthropicHandler(options)
 	}
 }
+
