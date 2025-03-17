@@ -4,7 +4,9 @@ import lombok.Data;
 
 @Data
 public class RecordRes extends  Record{
-
+    /**
+   记录
+     */
     private String username;
     private String adminname;
     private String goodsname;
