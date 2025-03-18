@@ -1,8 +1,8 @@
 import { Anthropic } from "@anthropic-ai/sdk"
-import { ApiConfiguration, ModelInfo } from "../core/api"
-import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
-import { AnthropicHandler } from "../providers/anthropic"
-import { OpenAiHandler } from "../providers/openai"
+import { ApiConfiguration, ModelInfo } from "../shared/api"
+import { ApiStream, ApiStreamUsageChunk } from "./transform/stream"
+import { AnthropicHandler } from "./providers/anthropic"
+import { OpenAiHandler } from "./providers/openai"
 
 export interface ApiHandler {
 	createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream

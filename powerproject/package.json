@@ -14,10 +14,18 @@
   "contributes": {
     "commands": [
       {
-        "command": "powerproject.helloWorld",
-        "title": "Hello World"
+        "command": "powerproject.suggest",
+        "title": "PowerProject: Suggest Code"
       }
-    ]
+    ],
+    "configuration":{
+      "title": "PowerProject",
+      "properties": {}
+    },
+    "keybindings":{
+      "command": "",
+      "key": ""
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -1,5 +1,5 @@
-// handler示例使用
-import { generateCode } from "./handler";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // async function main() {
 //     const userMessage = "Generate a function that returns the sum of two numbers.";
 //     const config = {
@@ -10,11 +10,8 @@ import { generateCode } from "./handler";
 //       maxTokens: 4096,
 //       baseURL: "https://api.chatgptsb.com/v1/"
 //     };
-  
 //     const fullText = await generateCode(userMessage, config);
 //     console.log("完整的文本内容:", fullText);
 //   }
-  
 //   main();
-
-
+//# sourceMappingURL=test.js.map
