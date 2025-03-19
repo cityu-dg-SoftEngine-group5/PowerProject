@@ -18,11 +18,11 @@
         "title": "PowerProject: Suggest Code"
       }
     ],
-    "configuration":{
+    "configuration": {
       "title": "PowerProject",
       "properties": {}
     },
-    "keybindings":{
+    "keybindings": {
       "command": "",
       "key": ""
     }
@@ -36,7 +36,6 @@
     "test": "vscode-test,jest"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.14",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.98.0",
