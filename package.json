@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "cnpm": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.0"
+  }
+}
