@@ -7,17 +7,33 @@ const routes = [
         component:()=>import('@/components/Login')
     },
     {
-        path:'/Index',
-        name:'index',
+        path:'/home',
+        name:'home',
         component:()=>import('@/components/Index'),
         children:[
             {
-                path:'/Home',
-                name:'home',
+                path:'/code',
+                name:'code',
                 meta:{
-                    title:'首页'
+                    title:'code'
                 },
-                component:()=>import('@/components/Home')
+                component:()=>import('@/components/Home.vue')
+            },
+            {
+                path:'/chat',
+                name:'chat',
+                meta:{
+                    title:'chat'
+                },
+                component:()=>import('@/components/Home.vue')
+            },
+            {
+                path:'/kanban',
+                name:'kanban',
+                meta:{
+                    title:'kanban'
+                },
+                component:()=>import('@/components/TodoList/TodoList.vue')
             }
         ]
     }

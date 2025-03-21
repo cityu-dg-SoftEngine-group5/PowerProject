@@ -1,20 +1,40 @@
 <template>
-  <div style="display: flex;line-height: 60px;">
-    <div style="margin-top: 8px;">
-      <i :class="icon" style="font-size: 20px;cursor: pointer;" @click="collapse"></i>
-    </div>
-    <div style="flex: 1;text-align: center;font-size: 30px;">
-      <span>Project Management System</span>
-      <el-tag size="medium" type="success" style="display: inline-block; margin-left: 10px;">{{user.lab}}</el-tag>
-    </div>
-    <el-dropdown>
-      <span>{{user.name}}</span><i class="el-icon-arrow-down" style="margin-left: 5px;"></i>
-      <el-dropdown-menu slot="dropdown" style="margin-top: -20px">
-        <el-dropdown-item @click.native="toUser">Profile</el-dropdown-item>
-        <el-dropdown-item @click.native="logout">LogOut</el-dropdown-item>
-      </el-dropdown-menu>
-    </el-dropdown>
-
+  <div class="header">
+    <el-row :gutter="20" type="flex" justify="left">
+      <el-col :span="2" class="center">
+        <div>
+          <el-button :class="icon" style="margin-left: 5px; margin-right: 5px"></el-button>
+        </div>
+<!--        <div>-->
+<!--          <i :class="icon" style="font-size: 20px;cursor: pointer;" @click="collapse"></i>-->
+<!--        </div>-->
+      </el-col>
+      <el-col :span="6" >
+        <el-button type="text" class="title"  style="color: black; font-size: 14px">Project Management System</el-button>
+      </el-col>
+    </el-row>
+    <el-row>
+      <el-menu
+          mode="horizontal"
+          :default-active="activeIndex"
+          class="el-menu"
+          background-color="rgb(246,248,250)"
+          @select="handleSelect"
+      >
+        <el-menu-item index="/kanban">
+          <i class="el-icon-folder"></i>
+          Kanban
+        </el-menu-item>
+        <el-menu-item index="/code">
+          <i class="el-icon-folder"></i>
+          Code
+        </el-menu-item>
+        <el-menu-item index="/chat">
+          <i class="el-icon-folder"></i>
+          Chat
+        </el-menu-item>
+      </el-menu>
+    </el-row>
   </div>
 </template>
 
@@ -23,7 +43,9 @@ export default {
   name: "Header",
   data(){
     return {
-      user : JSON.parse(sessionStorage.getItem('CurUser'))
+      // user : JSON.parse(sessionStorage.getItem('CurUser'))
+      activeIndex: "code",
+      user: {lab: 110}
     }
   },
   props:{
@@ -63,6 +85,10 @@ export default {
     },
     collapse(){
       this.$emit('doCollapse')
+    },
+    handleSelect(key, keyPath) {
+      this.$router.push(key)
+      // console.log(key, keyPath)
     }
 
   },
@@ -74,5 +100,20 @@ export default {
 </script>
 
 <style scoped>
+.header {
+  background-color: rgb(246,248,250);
+}
+
+.title {
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(31, 35, 40);
+}
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 </style>
