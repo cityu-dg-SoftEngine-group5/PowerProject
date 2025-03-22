@@ -1,23 +1,52 @@
 import * as vscode from 'vscode';
+import { streamToString } from '../utils/streamToString';
 
 async function get_from_web() {
     try {
-        // 从网络接口获取数据（支持stream或string）
-        const response = await fetch('http://localhost:3000/api/receive');
+        // 从配置获取服务器地址
+        const config = vscode.workspace.getConfiguration('webCompletion');
+        const baseUrl = config.get<string>('serverUrl');
+        
+        if (!baseUrl) {
+            vscode.window.showErrorMessage('Web server URL not configured');
+            return;
+        }
+
+        // 构建完整请求地址
+        const apiUrl = vscode.Uri.parse(`${baseUrl}/api/receive`).toString();
+        
+        // 获取网络响应
+        const response = await fetch(apiUrl);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // 将响应内容统一转换为string类型
-        const content = response.body ?
-            await streamToString(response.body) :  // 处理stream类型
-            await response.text();                // 处理string类型
+        // 自动检测响应类型
+        const contentType = response.headers.get('content-type') || '';
+        let completionContent: string;
 
-        // 解析返回内容（假设返回JSON格式）
-        const result = JSON.parse(content);
-        
-        if (!result.processedCode) {
+        if (response.body) {
+            // 处理流式响应
+            completionContent = await streamToString(response.body);
+        } else {
+            // 处理普通文本响应
+            completionContent = await response.text();
+        }
+
+        // 解析内容（支持JSON和纯文本）
+        let finalContent = completionContent;
+        if (contentType.includes('application/json')) {
+            try {
+                const jsonData = JSON.parse(completionContent);
+                // 如果包含processedCode字段则优先使用
+                finalContent = jsonData.processedCode || completionContent;
+            } catch {
+                // 保持原始内容
+            }
+        }
+
+        if (!finalContent) {
             vscode.window.showErrorMessage('Received empty completion content');
             return;
         }
@@ -25,47 +54,23 @@ async function get_from_web() {
         // 更新到活动编辑器
         const editor = vscode.window.activeTextEditor;
         if (editor) {
-            // 使用VS Code的edit API进行内容修改
             const success = await editor.edit(editBuilder => {
-                // 在光标位置插入内容（可改为替换选中内容）
-                editBuilder.insert(editor.selection.active, result.processedCode);
+                // 替换当前选中内容，如果没有选中则插入
+                if (editor.selection.isEmpty) {
+                    editBuilder.insert(editor.selection.active, finalContent);
+                } else {
+                    editBuilder.replace(editor.selection, finalContent);
+                }
             });
 
             if (success) {
-                vscode.window.showInformationMessage('Code completion applied successfully');
+                vscode.window.showInformationMessage('Code applied successfully');
             } else {
-                vscode.window.showErrorMessage('Failed to apply code completion');
+                vscode.window.showErrorMessage('Failed to apply code');
             }
-        } else {
-            vscode.window.showWarningMessage('No active editor found');
         }
     } catch (error) {
-        let errorMessage = "Unknown error";
-        if (error instanceof Error) errorMessage = error.message;
-        vscode.window.showErrorMessage(`Get from web failed: ${errorMessage}`);
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Get from web failed: ${message}`);
     }
-}
-
-// 将ReadableStream转换为string的辅助函数
-async function streamToString(stream: ReadableStream<Uint8Array>): Promise<string> {
-    const reader = stream.getReader();
-    const chunks: Uint8Array[] = [];
-    
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) chunks.push(value);
-    }
-    
-    return new TextDecoder().decode(Buffer.concat(chunks));
-}
-
-// 在命令中调用示例
-let receiveDisposable = vscode.commands.registerCommand('extension.receiveFromWeb', get_from_web);
-
-
-// 使用 vscode.ExtensionContext
-export function activate(context: vscode.ExtensionContext) {
-    const disposable = vscode.commands.registerCommand('command', () => {});
-    context.subscriptions.push(receiveDisposable); // 正确访问 subscriptions
 }
