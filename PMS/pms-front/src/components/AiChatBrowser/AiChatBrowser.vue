@@ -1,15 +1,9 @@
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 
-interface Message {
-  content: string
-  isUser: boolean
-  file?: File | null
-}
-
-const messages = ref<Message[]>([])
+const messages = ref([])
 const userInput = ref('')
-const fileInput = ref<File | null>(null)
+const fileInput = ref(null)
 
 const handleSubmit = () => {
   if (!userInput.value.trim() && !fileInput.value) return
@@ -34,8 +28,8 @@ const handleSubmit = () => {
   }, 1000)
 }
 
-const handleFileUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement
+const handleFileUpload = (event) => {
+  const target = event.target
   if (target.files) {
     fileInput.value = target.files[0]
   }
