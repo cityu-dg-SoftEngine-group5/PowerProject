@@ -77,53 +77,82 @@ async function get_from_web() {
 
 
 
-
-
 async function send_to_web() {
     try {
+        // 从配置获取动态服务器地址 [2,4](@ref)
+        const config = vscode.workspace.getConfiguration('webCompletion');
+        const baseUrl = config.get<string>('serverUrl');
+        
+        if (!baseUrl) {
+            vscode.window.showErrorMessage('Web server URL not configured');
+            return;
+        }
+
+        // 构建完整API端点
+        const apiUrl = vscode.Uri.parse(`${baseUrl}/api/send`).toString();
+
+        // 获取编辑器内容
         const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showWarningMessage("No active editor");
-            return;
+        let payloadContent = '';
+        
+        if (editor && !editor.selection.isEmpty) {
+            payloadContent = editor.document.getText(editor.selection);
+        } else {
+            payloadContent = 'default code content'; 
         }
 
-        // 获取选中内容（若未选中则取当前行）[3,5](@ref)
-        const selection = editor.selection;
-        let selectedText = editor.document.getText(selection);
-        if (selectedText === "") {
-            const currentLine = editor.document.lineAt(selection.active.line);
-            selectedText = currentLine.text;
-        }
-
-        // 校验内容有效性
-        if (!selectedText.trim()) {
-            vscode.window.showErrorMessage("Selected content is empty");
-            return;
-        }
-
-        // 网络请求（与 Get from web 保持相同超时和错误处理）
-        const response = await fetch('http://localhost:3000/api/send', {
+        // 发送请求
+        const response = await fetch(apiUrl, {
             method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                code: selectedText,
-                metadata: {
-                    language: editor.document.languageId,  // 携带代码类型（如 JavaScript/Python）
-                    position: selection.active,            // 光标位置信息
-                    timestamp: new Date().toISOString()
-                }
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: payloadContent })
         });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // 响应处理
-        const result = await response.json();
-        vscode.window.showInformationMessage('Code sent to web successfully');
+        // 动态解析响应内容
+        const contentType = response.headers.get('content-type') || '';
+        let responseData: any;
+
+        if (contentType.includes('application/json')) {
+            try {
+                responseData = await response.json();
+            } catch {
+                throw new Error('Invalid JSON response');
+            }
+        } else if (contentType.startsWith('text/')) {
+            responseData = await response.text();
+        } else {
+            throw new Error(`Unsupported content-type: ${contentType}`);
+        }
+
+        // 字段提取
+        const processedContent = typeof responseData === 'object' 
+            ? responseData.processedCode || JSON.stringify(responseData)
+            : responseData;
+
+        if (!processedContent) {
+            throw new Error('Empty processed content');
+        }
+
+        // 更新编辑器
+        if (editor) {
+            const success = await editor.edit(editBuilder => {
+                if (editor.selection.isEmpty) {
+                    editBuilder.insert(editor.selection.active, processedContent);
+                } else {
+                    editBuilder.replace(editor.selection, processedContent);
+                }
+            });
+
+            vscode.window.showInformationMessage(
+                success ? 'Content updated successfully' : 'Update failed'
+            );
+        }
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message = error instanceof Error ? error.message : 'Unknown error';
         vscode.window.showErrorMessage(`Send to web failed: ${message}`);
     }
 }
