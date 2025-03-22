@@ -75,11 +75,9 @@ async function get_from_web() {
     }
 }
 
-
-
 async function send_to_web() {
     try {
-        // 从配置获取动态服务器地址 [2,4](@ref)
+        // 从配置获取服务器地址
         const config = vscode.workspace.getConfiguration('webCompletion');
         const baseUrl = config.get<string>('serverUrl');
         
@@ -88,69 +86,43 @@ async function send_to_web() {
             return;
         }
 
-        // 构建完整API端点
-        const apiUrl = vscode.Uri.parse(`${baseUrl}/api/send`).toString();
-
-        // 获取编辑器内容
+        // 获取活动编辑器选中的内容
         const editor = vscode.window.activeTextEditor;
-        let payloadContent = '';
-        
-        if (editor && !editor.selection.isEmpty) {
-            payloadContent = editor.document.getText(editor.selection);
-        } else {
-            payloadContent = 'default code content'; 
+        if (!editor) {
+            vscode.window.showErrorMessage('No active text editor');
+            return;
         }
 
-        // 发送请求
+        const selection = editor.selection;
+        const selectedContent = editor.document.getText(selection);
+        
+        if (!selectedContent) {
+            vscode.window.showInformationMessage('No selected content to send');
+            return;
+        }
+
+        // 构建完整请求地址
+        const apiUrl = vscode.Uri.parse(`${baseUrl}/api/send`).toString(); // 假设接口路径为/send
+        const headers = new Headers();
+
+       
+        headers.append('Content-Type', 'text/plain; charset=utf-8'); // 默认使用纯文本
+        // 发送POST请求
         const response = await fetch(apiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code: payloadContent })
+            headers: headers,
+            body: selectedContent   
         });
+
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // 动态解析响应内容
-        const contentType = response.headers.get('content-type') || '';
-        let responseData: any;
+        // 处理响应
+        const responseContent = await response.text();
+        vscode.window.showInformationMessage(`Code sent successfully. Server response: ${responseContent}`);
 
-        if (contentType.includes('application/json')) {
-            try {
-                responseData = await response.json();
-            } catch {
-                throw new Error('Invalid JSON response');
-            }
-        } else if (contentType.startsWith('text/')) {
-            responseData = await response.text();
-        } else {
-            throw new Error(`Unsupported content-type: ${contentType}`);
-        }
-
-        // 字段提取
-        const processedContent = typeof responseData === 'object' 
-            ? responseData.processedCode || JSON.stringify(responseData)
-            : responseData;
-
-        if (!processedContent) {
-            throw new Error('Empty processed content');
-        }
-
-        // 更新编辑器
-        if (editor) {
-            const success = await editor.edit(editBuilder => {
-                if (editor.selection.isEmpty) {
-                    editBuilder.insert(editor.selection.active, processedContent);
-                } else {
-                    editBuilder.replace(editor.selection, processedContent);
-                }
-            });
-
-            vscode.window.showInformationMessage(
-                success ? 'Content updated successfully' : 'Update failed'
-            );
-        }
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         vscode.window.showErrorMessage(`Send to web failed: ${message}`);
