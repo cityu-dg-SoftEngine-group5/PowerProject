@@ -77,7 +77,11 @@ async function get_from_web() {
 
 async function send_to_web() {
     try {
+<<<<<<< HEAD
         // 从配置获取服务器地址
+=======
+        // 从配置获取动态服务器地址 
+>>>>>>> 0e0ca3b82ed05c4029fe9d3ffb09e002d77c5a10
         const config = vscode.workspace.getConfiguration('webCompletion');
         const baseUrl = config.get<string>('serverUrl');
         
