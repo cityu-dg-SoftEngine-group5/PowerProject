@@ -48,7 +48,7 @@ async function predectNextCode() {
     // Step5-6: 构造提示语
     if(hasCodeAfterCursor) {
         const userMessage = `${textBeforeCursor}{write code here}${textAfterCursor}`;      
-        let task = "Complete the current line";  //这里是当前行光标后有剩余代码，所以任务应该是补全当前行的代码，这个任务是codecompletion的一个子任务，只管当前行
+        let task = "CompleteCurrentLine";  //这里是当前行光标后有剩余代码，所以任务应该是补全当前行的代码，这个任务是codecompletion的一个子任务，只管当前行
 
         const { systemPrompt, messageParams } = genPrompt(task, userMessage);  
     // Step7: 生成代码
@@ -60,7 +60,7 @@ async function predectNextCode() {
         });
     }else{
         const userMessage = `${contextCode}{write code here}`;      
-        let task = "Predect the next line code"; //根据前五行代码预测下一行代码
+        let task = "PrdectNextLine"; //根据前五行代码预测下一行代码
 
         const { systemPrompt, messageParams } = genPrompt(task, userMessage);
         const fullText = await generateCode(systemPrompt, messageParams, api_handler);
