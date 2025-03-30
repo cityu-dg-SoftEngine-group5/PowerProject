@@ -33,33 +33,34 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.activate = activate;
-exports.deactivate = deactivate;
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+exports.selectModel = selectModel;
 const vscode = __importStar(require("vscode"));
-const codecompletement_1 = require("./core/codecompletement");
-const selectmodel_1 = require("./api/selectmodel");
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-function activate(context) {
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with registerCommand
-    // The commandId parameter must match the command field in package.json
-    const disposable = vscode.commands.registerCommand('powerproject.suggest', async () => {
-        // The code you place here will be executed every time your command is executed
-        vscode.window.withProgress({
-            location: vscode.ProgressLocation.Notification,
-            title: 'Generating code suggestions...',
-        }, async (progress, token) => {
-            await (0, codecompletement_1.makeSuggestion)();
+const api_1 = require("../shared/api");
+async function selectModel() {
+    const config = vscode.workspace.getConfiguration('powerproject');
+    const api_provider = config.get('apiProvider');
+    let selectedModel;
+    vscode.window.showInformationMessage(api_provider);
+    if (api_provider === 'openai') {
+        const modelIds = Object.keys(api_1.openAiNativeModels);
+        selectedModel = await vscode.window.showQuickPick(modelIds, {
+            title: 'Select OpenAI Model',
+            placeHolder: 'Select a model',
         });
-    });
-    const selectModelDisposable = vscode.commands.registerCommand('powerproject.selectModel', async () => {
-        await (0, selectmodel_1.selectModel)();
-    });
-    context.subscriptions.push(disposable, selectModelDisposable);
+    }
+    else if (api_provider === 'anthropic') {
+        const modelIds = Object.keys(api_1.anthropicModels);
+        selectedModel = await vscode.window.showQuickPick(modelIds, {
+            title: 'Select Anthropic Model',
+            placeHolder: 'Select a model',
+        });
+    }
+    if (selectedModel) {
+        await config.update('modelId', selectedModel, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`Selected model: ${selectedModel}`);
+    }
+    else {
+        vscode.window.showInformationMessage('No model selected');
+    }
 }
-// This method is called when your extension is deactivated
-function deactivate() { }
-//# sourceMappingURL=extension.js.map
+//# sourceMappingURL=selectmodel.js.map

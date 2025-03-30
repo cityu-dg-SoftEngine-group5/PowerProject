@@ -16,11 +16,35 @@
       {
         "command": "powerproject.suggest",
         "title": "PowerProject: Suggest Code"
+      },
+      {
+        "command": "powerproject.selectModel",
+        "title": "PowerProject: Select Model"
       }
     ],
     "configuration": {
+      "type": "object",
       "title": "PowerProject",
-      "properties": {}
+      "properties": {
+        "powerproject.apiProvider": {
+          "type": "string",
+          "default": "openai",
+          "enum": ["openai", "anthropic"],
+          "description": "The API provider to use"
+        },
+        "powerproject.apiKey": {
+          "type": "string",
+          "description": "The API key to use"
+        },
+        "powerproject.baseURL": {
+          "type": "string",
+          "description": "The base URL to use"
+        },
+        "powerproject.modelId": {
+          "type": "string",
+          "description": "The model ID to use"
+        }
+      }
     },
     "keybindings": {
       "command": "",

@@ -37,6 +37,8 @@ exports.makeSuggestion = makeSuggestion;
 const vscode = __importStar(require("vscode"));
 const handler_1 = require("../api/handler");
 const codeFormat_1 = require("../utils/codeFormat");
+const index_1 = require("../api/index");
+const utils_1 = require("../api/utils");
 async function makeSuggestion() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -48,18 +50,23 @@ async function makeSuggestion() {
     const cursorPosition = selection.active;
     const textBeforeCursor = document.getText(new vscode.Range(new vscode.Position(0, 0), cursorPosition));
     const textAfterCursor = document.getText(new vscode.Range(cursorPosition, new vscode.Position(document.lineCount, 0)));
-    const config = {
-        apiProvider: "openai",
-        apiKey: "sk-IOMv20Q2hXNywuznWLZJEvCmG1SexZjevalacK6SF3Tys6m6", // 替换真实API密钥
-        modelId: "gpt-3.5-turbo",
-        temperature: 0.5,
-        maxTokens: 4096,
-        baseURL: "https://api.chatgptsb.com/v1/"
+    const config = vscode.workspace.getConfiguration('powerproject');
+    const api_config = {
+        apiProvider: config.get('apiProvider'),
+        apiKey: config.get('apiKey'),
+        anthropicBaseUrl: config.get('baseURL'),
+        openAiBaseUrl: config.get('baseURL'),
+        openAiApiKey: config.get('apiKey'),
+        openAiModelId: config.get('modelId'),
     };
+    const api_handler = (0, index_1.buildApiHandler)(api_config);
     const userMessage = `${textBeforeCursor}{write code here}${textAfterCursor}`;
-    const fullText = await (0, handler_1.generateCode)(userMessage, config);
+    let task = "completecode";
+    const { systemPrompt, messageParams } = (0, utils_1.genPrompt)(task, userMessage);
+    const fullText = await (0, handler_1.generateCode)(systemPrompt, messageParams, api_handler);
+    const code = (0, utils_1.extractCode)(fullText);
     editor.edit(async (editBuilder) => {
-        editBuilder.replace(selection, (0, codeFormat_1.formatCodeForInsertion)(fullText, textBeforeCursor));
+        editBuilder.replace(selection, (0, codeFormat_1.formatCodeForInsertion)(code, textBeforeCursor));
     });
 }
 //# sourceMappingURL=codecompletement.js.map
