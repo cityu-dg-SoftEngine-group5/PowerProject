@@ -60,7 +60,7 @@ async function predectNextCode() {
         });
     }else{
         const userMessage = `${contextCode}{write code here}`;      
-        let task = "PrdectNextLine"; //根据前五行代码预测下一行代码
+        let task = "PredectNextLine"; //根据前五行代码预测下一行代码
 
         const { systemPrompt, messageParams } = genPrompt(task, userMessage);
         const fullText = await generateCode(systemPrompt, messageParams, api_handler);
