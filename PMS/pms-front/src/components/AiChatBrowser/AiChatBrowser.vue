@@ -91,3 +91,7 @@ const handleFileUpload = (event) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+@import './style.css';
+</style>
