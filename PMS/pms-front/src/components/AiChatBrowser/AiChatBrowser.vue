@@ -4,28 +4,76 @@ import { ref } from 'vue'
 const messages = ref([])
 const userInput = ref('')
 const fileInput = ref(null)
+const isLoading = ref(false)
 
-const handleSubmit = () => {
+// API configuration
+const API_ENDPOINT = 'http://localhost:8080/ai/chat'
+const API_HEADERS = {
+  'Content-Type': 'application/json',
+}
+
+const handleSubmit = async () => {
   if (!userInput.value.trim() && !fileInput.value) return
 
   // Add user message
-  messages.value.push({
+  const userMessage = {
     content: userInput.value,
     isUser: true,
     file: fileInput.value
-  })
+  }
+  messages.value.push(userMessage)
 
   // Clear inputs
   userInput.value = ''
   fileInput.value = null
 
-  // Simulate AI response
-  setTimeout(() => {
+  try {
+    isLoading.value = true
+
+    // Send request to API
+    const aiResponse = await getAIResponse(userMessage)
+
+    // Add AI response to messages
     messages.value.push({
-      content: "This is a simulated AI response.",
+      content: aiResponse.message,
+      isUser: false,
+      metadata: aiResponse.metadata // Additional data
+    })
+  } catch (error) {
+    console.error('API request failed:', error)
+    messages.value.push({
+      content: "Request failed, please try again later",
       isUser: false
     })
-  }, 1000)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const getAIResponse = async (userMessage) => {
+  // Prepare request body
+  const requestBody = {
+    message: {
+      content: userMessage.content,
+      type: 'text',
+      timestamp: new Date().toISOString()
+    },
+    file_info: userMessage.file ? {
+      name: userMessage.file.name,
+      type: userMessage.file.type,
+      size: userMessage.file.size
+    } : null
+  }
+
+  const response = await fetch(API_ENDPOINT, {
+    method: 'POST',
+    headers: API_HEADERS,
+    body: JSON.stringify(requestBody)
+  })
+
+  if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
+
+  return response.json()
 }
 
 const handleFileUpload = (event) => {
@@ -38,6 +86,10 @@ const handleFileUpload = (event) => {
 
 <template>
   <div class="min-h-screen">
+    <!-- Loading indicator -->
+    <div v-if="isLoading" class="loading-indicator">
+      Getting response...
+    </div>
     <div class="container">
       <!-- Header -->
       <header class="header">
