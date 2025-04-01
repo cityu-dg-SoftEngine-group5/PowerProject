@@ -3,9 +3,21 @@
 import * as vscode from 'vscode';
 import { makeSuggestion } from './core/codecompletement';
 import { selectModel } from './api/selectmodel';
+import { VSCodeHttpServer } from './core/webserver';
+
+let webServer: VSCodeHttpServer | null = null;
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	
+	const webServerPort = vscode.workspace.getConfiguration('powerproject').get('webServerPort', 10098);
+	webServer = new VSCodeHttpServer(webServerPort);
+	//show the port in the status bar
+	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	statusBarItem.text = `PowerProject: ${webServerPort}`;
+	statusBarItem.show();
+	webServer.start();
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -28,4 +40,8 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+	if(webServer) {
+		webServer.stop();
+	}
+}

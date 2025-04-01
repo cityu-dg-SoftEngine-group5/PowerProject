@@ -8,7 +8,7 @@ function genPrompt(taskType, userMessage, options) {
     let messageparams = [];
     switch (taskType) {
         case "completecode":
-            systemprompt = "You are a helpful AI assistant that generates code. Complete the following code for me. Don't explain, just return the code. You should write the best replacement for placeholder {write code here} in the text. ";
+            systemprompt = "You are a helpful AI assistant that generates code. Complete the following code for me. Don't explain, just return the code. You should write the best replacement for placeholder {write code here} in the text. Include change line if needed.";
             messageparams = [{ role: "user", content: userMessage }];
     }
     return {

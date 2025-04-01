@@ -43,6 +43,11 @@
         "powerproject.modelId": {
           "type": "string",
           "description": "The model ID to use"
+        },
+        "powerproject.webServerPort": {
+          "type": "number",
+          "default": 10098,
+          "description": "The port to use for the web server"
         }
       }
     },
