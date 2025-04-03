@@ -14,6 +14,11 @@ export function genPrompt(
         case "completecode":
             systemprompt = "You are a helpful AI assistant that generates code. Complete the following code for me. Don't explain, just return the code. You should write the best replacement for placeholder {write code here} in the text. Include change line if needed.";
             messageparams = [{ role: "user", content: userMessage }];
+            break;
+        case "modifycode_terminalandfile":
+            systemprompt = "You are a helpful AI assistant that modifies code. Modify the following code for me. Don't explain, just return the code.";
+            messageparams = [{ role: "user", content: userMessage }];
+            break;
     }
     return {
         systemPrompt: systemprompt,

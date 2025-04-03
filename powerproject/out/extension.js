@@ -41,6 +41,9 @@ const vscode = __importStar(require("vscode"));
 const codecompletement_1 = require("./core/codecompletement");
 const selectmodel_1 = require("./api/selectmodel");
 const webserver_1 = require("./core/webserver");
+const aiterminal_1 = require("./core/aiterminal");
+const terminalservice_1 = require("./core/terminalservice");
+const terminalAndfile_1 = require("./core/terminalAndfile");
 let webServer = null;
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -68,6 +71,17 @@ function activate(context) {
         await (0, selectmodel_1.selectModel)();
     });
     context.subscriptions.push(disposable, selectModelDisposable);
+    const terminalCommand = vscode.commands.registerCommand('powerproject.openAITerminal', () => {
+        const aiTerminal = new aiterminal_1.AITerminal();
+        terminalservice_1.TerminalService.setTerminal(aiTerminal);
+        const terminal = vscode.window.createTerminal({ name: "AI Terminal", pty: aiTerminal });
+        terminal.show();
+    });
+    context.subscriptions.push(terminalCommand);
+    const terminalAndfileCommand = vscode.commands.registerCommand('powerproject.terminalAndfile', async () => {
+        await (0, terminalAndfile_1.terminalAndfile)();
+    });
+    context.subscriptions.push(terminalAndfileCommand);
 }
 // This method is called when your extension is deactivated
 function deactivate() {

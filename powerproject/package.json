@@ -20,6 +20,14 @@
       {
         "command": "powerproject.selectModel",
         "title": "PowerProject: Select Model"
+      },
+      {
+        "command": "powerproject.openAITerminal",
+        "title": "PowerProject: Open AI Terminal"
+      },
+      {
+        "command": "powerproject.terminalAndfile",
+        "title": "PowerProject: Modify code with Terminal and File"
       }
     ],
     "configuration": {

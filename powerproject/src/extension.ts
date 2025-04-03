@@ -4,7 +4,9 @@ import * as vscode from 'vscode';
 import { makeSuggestion } from './core/codecompletement';
 import { selectModel } from './api/selectmodel';
 import { VSCodeHttpServer } from './core/webserver';
-
+import { AITerminal } from './core/aiterminal';
+import { TerminalService } from './core/terminalservice';
+import { terminalAndfile } from './core/terminalAndfile';
 let webServer: VSCodeHttpServer | null = null;
 
 // This method is called when your extension is activated
@@ -37,6 +39,19 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(disposable, selectModelDisposable);
+
+	const terminalCommand = vscode.commands.registerCommand('powerproject.openAITerminal', () => {
+        const aiTerminal = new AITerminal();
+		TerminalService.setTerminal(aiTerminal);
+        const terminal = vscode.window.createTerminal({ name: "AI Terminal", pty: aiTerminal });
+        terminal.show();
+    });
+    context.subscriptions.push(terminalCommand);
+
+	const terminalAndfileCommand = vscode.commands.registerCommand('powerproject.terminalAndfile', async() => {
+		await terminalAndfile();
+	});
+	context.subscriptions.push(terminalAndfileCommand);
 }
 
 // This method is called when your extension is deactivated
