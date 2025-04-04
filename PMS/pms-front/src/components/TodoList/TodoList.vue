@@ -39,7 +39,7 @@
       </span>
     </el-dialog>
 
-    <div class="container">
+    <div class="container1" >
       <vue-drag-resize-rotate
           v-for="(item, index) in box"
           :key="index"
@@ -158,8 +158,7 @@ export default {
 </script>
 
 <style scoped>
-.container {
-  width: 100%;
+.container1 {
   height: 85vh;
   border: 1px solid #ccc;
   position: relative;
