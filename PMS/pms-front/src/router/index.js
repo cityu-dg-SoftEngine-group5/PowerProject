@@ -23,7 +23,7 @@ const routes = [
                meta:{
                    title:'code'
                },
-               component:()=>import('@/components/Home.vue')
+               component:()=>import('@/components/CodeBrowser/CodeBrowser.vue')
            },
            {
                path:'/chat',
