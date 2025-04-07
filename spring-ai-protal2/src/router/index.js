@@ -36,6 +36,11 @@ const routes = [
     path: '/todolist',
     name: 'todolist',
     component: () => import('../components/TodoList.vue')
+  },
+  {
+    path: '/code',
+    name: 'code',
+    component: () => import('../components/CodeBrowser.vue')
   }
 ]
 
