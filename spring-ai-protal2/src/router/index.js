@@ -31,6 +31,11 @@ const routes = [
     path: '/game',
     name: 'game',
     component: () => import('../views/GameChat.vue')
+  },
+  {
+    path: '/todolist',
+    name: 'todolist',
+    component: () => import('../components/TodoList.vue')
   }
 ]
 

@@ -11,12 +11,16 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@gausszhou/vue3-drag-resize-rotate": "^3.0.2",
     "@heroicons/vue": "^2.2.0",
     "@pdftron/webviewer": "^11.3.0",
     "@vueuse/components": "^12.7.0",
     "@vueuse/core": "^12.7.0",
     "ai-pms-hub": "file:",
+    "axios": "^1.8.4",
     "dompurify": "^3.2.4",
+    "element-plus": "^2.9.7",
     "fs-extra": "^11.2.0",
     "highlight.js": "^11.11.1",
     "marked": "^15.0.7",

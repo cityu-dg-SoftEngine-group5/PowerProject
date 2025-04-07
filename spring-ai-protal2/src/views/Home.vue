@@ -35,33 +35,25 @@ const isDark = useDark()
 const aiApps = ref([
   {
     id: 1,
-    title: 'AI 聊天',
+    title: 'AI Chat',
     description: '',
     route: '/ai-chat',
     icon: ChatBubbleLeftRightIcon
+  },
+  {
+    id: 2,
+    title: 'Project',
+    description: '',
+    route: '/code',
+    icon: ChatBubbleLeftRightIcon
+  },
+  {
+    id: 3,
+    title: 'TodoList',
+    description: '',
+    route: '/todolist',
+    icon: ChatBubbleLeftRightIcon
   }
-  // {
-  //   id: 2,
-  //   title: '哄哄模拟器',
-  //   description: '一个帮助你练习哄女朋友开心的小游戏',
-  //   route: '/game',
-  //   icon: HeartIcon,
-  //   iconClass: 'heart-icon'
-  // },
-  // {
-  //   id: 3,
-  //   title: '智能客服',
-  //   description: '24小时在线的智能课程咨询师',
-  //   route: '/customer-service',
-  //   icon: UserGroupIcon
-  // },
-  // {
-  //   id: 4,
-  //   title: 'ChatPDF',
-  //   description: '打造你的个人知识库，与知识库自由对话',
-  //   route: '/chat-pdf',
-  //   icon: DocumentTextIcon
-  // }
 ])
 </script>
 
