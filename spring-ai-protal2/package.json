@@ -27,6 +27,7 @@
     "naive-ui": "^2.41.0",
     "pinia": "^3.0.1",
     "prismjs": "^1.30.0",
+    "relation-graph": "^2.2.11",
     "sass": "^1.85.1",
     "vue": "^3.4.15",
     "vue-router": "^4.2.5"

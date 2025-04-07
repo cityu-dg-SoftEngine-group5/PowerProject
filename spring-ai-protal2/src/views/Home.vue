@@ -53,6 +53,13 @@ const aiApps = ref([
     description: '',
     route: '/todolist',
     icon: ChatBubbleLeftRightIcon
+  },
+  {
+    id: 4,
+    title: 'GitLog',
+    description: '',
+    route: '/git',
+    icon: ChatBubbleLeftRightIcon
   }
 ])
 </script>

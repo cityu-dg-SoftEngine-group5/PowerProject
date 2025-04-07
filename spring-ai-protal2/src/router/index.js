@@ -41,6 +41,11 @@ const routes = [
     path: '/code',
     name: 'code',
     component: () => import('../components/CodeBrowser.vue')
+  },
+  {
+    path: '/git',
+    name: 'git',
+    component: () => import('../components/GitLogViewer.vue')
   }
 ]
 
