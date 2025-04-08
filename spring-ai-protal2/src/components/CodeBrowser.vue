@@ -556,14 +556,6 @@ code {
   text-overflow: ellipsis;
 }
 
-.el-tree {
-  background-color: transparent;
-}
-
-.el-tree-node__content {
-  height: 32px;
-}
-
 .el-tree-node:focus > .el-tree-node__content {
   background-color: var(--el-color-primary-light-9);
 }

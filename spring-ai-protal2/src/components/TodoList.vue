@@ -110,14 +110,14 @@
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Plus, Delete, Edit } from '@element-plus/icons-vue';
-import axios from "axios";
+import request from '../services/request.js'
 import {requestApiCollection} from "../services/api_others.js";
 
 // Reactive state
 const angle = ref(0);
 const isSnap = ref(true);
 const isAllowParent = ref(true);
-const isConflictCheck = ref(true);
+const isConflictCheck = ref(false);
 const dialogVisible = ref(false);
 const dialogTitle = ref('Add Todo Item');
 const isModify = ref(false);
@@ -146,7 +146,7 @@ onMounted(() => {
 const fetchTodos = async () => {
   try {
     loading.value = true;
-    const response = await axios.get(requestApiCollection.getTodoListApi);
+    const response = await request.get(requestApiCollection.getTodoListApi);
     box.value = response.data;
 
     // Ensure each item has the required properties for the drag component
@@ -169,6 +169,8 @@ const fetchTodos = async () => {
 const onDragStop = (x, y, index) => {
   box.value[index].x = x;
   box.value[index].y = y;
+
+  updateTodoListToServer();
 };
 
 const addNewTodoItem = (task) => {
@@ -245,9 +247,7 @@ const modifyTodoItem = (index) => {
 };
 
 const updateTodoListToServer = () => {
-  axios.post(requestApiCollection.updateTodoListApi, {
-    "todolist": box.value
-  }).catch((error) => {
+  request.post(requestApiCollection.updateTodoListApi, box.value).catch((error) => {
     console.error('Error updating todos:', error);
   });
 };
