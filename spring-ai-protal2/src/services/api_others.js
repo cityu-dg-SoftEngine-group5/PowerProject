@@ -1,9 +1,11 @@
+
 export const requestApiCollection = {
-    getTodoListApi: "",
-    updateTodoListApi: "",
-    addTodoListItemApi: "",
-    addTodoListItemByAIApi: "",
-    getFileListApi: "",
-    getFileContentApi: "",
-    sendFileToAiApi: ""
+    getTodoListApi: "/todos/all",
+    updateTodoListApi: "/todos/submit",
+    addTodoListItemApi: "/todos/submit",
+    addTodoListItemByAIApi: "/todos/generate",
+    getFileListApi: "/files/structure",
+    getFileContentApi: "/files/content",
+    sendFileToAiApi: "/files/analyze",
+    getGitLogApi:"/api/gitlogs"
 }

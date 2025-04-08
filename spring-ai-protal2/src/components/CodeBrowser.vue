@@ -25,8 +25,10 @@
       </div>
 
       <div class="file-explorer">
-        <div class="file-tree">
+        <div v-loading="isLoadingRepoData" class="file-tree">
+          <el-empty v-if="!isLoadingRepoData && fileTree.length === 0" description="No files found" />
           <el-tree
+              v-else
               :data="fileTree"
               :props="defaultProps"
               @node-click="handleNodeClick"
@@ -139,7 +141,7 @@
 </template>
 
 <script>
-import {computed, nextTick, ref} from 'vue';
+import {computed, nextTick, ref, onMounted } from 'vue';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-css';
@@ -150,6 +152,8 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/themes/prism.css';
 import 'prismjs/plugins/line-numbers/prism-line-numbers';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.css';
+import request from '../services/request.js'
+
 
 // Element Plus icons
 import {
@@ -167,6 +171,8 @@ import {
   Tickets,
   View
 } from '@element-plus/icons-vue';
+import {requestApiCollection} from "../services/api_others.js";
+import {ElMessage} from "element-plus";
 
 export default {
   name: 'CodeBrowser',
@@ -186,68 +192,32 @@ export default {
     MagicStick
   },
   setup() {
-    const branches = ref(['main', 'develop']);
+    const branches = ref(['main']);
     const currentBranch = ref('main');
     const selectedFile = ref(null);
     const isLoading = ref(false);
+    const isLoadingRepoData = ref(false);
     const isAnalyzing = ref(false);
     const fileContents = ref({});
     const codeBlock = ref(null);
     const aiAnalysisResult = ref(null);
     const activePanels = ref(['code']);
+    const repositoryData = ref({});
 
     const defaultProps = {
       children: 'children',
       label: 'name'
     };
 
-    // Sample repository data structure
-    const repositoryData = ref({
-      main: {
-        fileTree: [{
-          name: 'src',
-          path: 'src',
-          type: 'directory',
-          children: [
-            {
-              name: 'abc.txt',
-              path: 'src/abc.txt',
-              type: 'file'
-            },
-            {
-              name: 'main.js',
-              path: 'src/main.js',
-              type: 'file'
-            },
-            {
-              name: 'styles.css',
-              path: 'src/styles.css',
-              type: 'file'
-            },
-            {
-              name: 'config.json',
-              path: 'src/config.json',
-              type: 'file'
-            },
-            {
-              name: 'README.md',
-              path: 'src/README.md',
-              type: 'file'
-            }
-          ]
-        }]
-      },
-      'develop': {
-        fileTree: []
-      },
-    });
-
     const fileTree = computed(() => {
-      return repositoryData.value[currentBranch.value].fileTree;
+      if (!currentBranch.value || !repositoryData.value[currentBranch.value]) {
+        return [];
+      }
+      return repositoryData.value[currentBranch.value] || [];
     });
 
     const isBinaryFile = computed(() => {
-      return selectedFile.value && selectedFile.value.content === '[Binary File]';
+      return selectedFile.value && selectedFile.value.type === 'binary';
     });
 
     const formattedAiResult = computed(() => {
@@ -259,6 +229,26 @@ export default {
           .replace(/`(.*?)`/g, '<code>$1</code>') // code
           .replace(/\n/g, '<br>'); // line breaks
     });
+
+    const fetchRepositoryData = async () => {
+      isLoadingRepoData.value = true;
+      try {
+        const response = await request.get(requestApiCollection.getFileListApi, {
+          params: {path: '/usr/ai_pms/test'}
+        });
+        repositoryData.value = response.data;
+        branches.value = Object.keys(response.data);
+
+        if (branches.value.length > 0) {
+          currentBranch.value = branches.value[0];
+        }
+      } catch (error) {
+        console.error('Error fetching repository data:', error);
+        ElMessage.error('Failed to load repository data');
+      } finally {
+        isLoadingRepoData.value = false;
+      }
+    };
 
     const handleBranchChange = (branch) => {
       currentBranch.value = branch;
@@ -273,10 +263,16 @@ export default {
         activePanels.value = ['code'];
 
         const cacheKey = `${currentBranch.value}-${data.path}`;
-        if (!fileContents.value[cacheKey]) {
+        if (fileContents.value[cacheKey] === 'Error loading file content' || !fileContents.value[cacheKey]) {
           isLoading.value = true;
           try {
-            fileContents.value[cacheKey] = await fetchFileContent(data.path, currentBranch.value);
+            const response = await request(requestApiCollection.getFileContentApi, {
+              params: {
+                filepath: data.path
+              }
+            });
+
+            fileContents.value[cacheKey] = response.data.content;
           } catch (error) {
             console.error('Error fetching file content:', error);
             fileContents.value[cacheKey] = 'Error loading file content';
@@ -334,48 +330,19 @@ export default {
       }
     };
 
-    const fetchFileContent = (filePath, branch) => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const extension = filePath.split('.').pop();
-          let content = '';
-
-          switch(extension) {
-            case 'js':
-              content = `// ${filePath}\n\nfunction greet() {\n  console.log('Hello from ${branch} branch!');\n}\n\ngreet();`;
-              break;
-            case 'css':
-              content = `/* ${filePath} */\n\nbody {\n  font-family: Arial, sans-serif;\n  margin: 0;\n  padding: 0;\n}`;
-              break;
-            case 'json':
-              content = `{\n  "name": "example-project",\n  "version": "1.0.0",\n  "description": "Sample project",\n  "main": "index.js"\n}`;
-              break;
-            case 'md':
-              content = `# ${filePath}\n\nThis is a sample Markdown file.\n\n## Features\n\n- Feature 1\n- Feature 2\n\n## Installation\n\n\`\`\`bash\nnpm install\n\`\`\``;
-              break;
-            case 'txt':
-              content = `This is a plain text file.\nPath: ${filePath}\nBranch: ${branch}`;
-              break;
-            default:
-              content = `File: ${filePath}\nBranch: ${branch}\n\nThis is a sample file content.`;
-          }
-
-          resolve(content);
-        }, 300);
-      });
-    };
-
     const analyzeWithAI = async () => {
       if (!selectedFile.value || isBinaryFile.value) return;
 
       isAnalyzing.value = true;
       try {
-        // Simulate AI analysis API call
-        const cacheKey = `${currentBranch.value}-${selectedFile.value.path}`;
-        const content = fileContents.value[cacheKey];
-
-        // Mock AI analysis based on file content
-        aiAnalysisResult.value = await mockAIAnalysis(selectedFile.value.name, content);
+        const response = await request(requestApiCollection.sendFileToAiApi, {
+          params: {
+            filepath: selectedFile.value.path
+          }
+        });
+        if (response.data.status === 0)
+          throw Error("server status failed");
+        aiAnalysisResult.value = response.data.content;
         activePanels.value = ['analysis'];
       } catch (error) {
         console.error('AI analysis failed:', error);
@@ -383,64 +350,6 @@ export default {
       } finally {
         isAnalyzing.value = false;
       }
-    };
-
-    const mockAIAnalysis = (filename, content) => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const extension = filename.split('.').pop();
-          let analysis = '';
-
-          switch(extension) {
-            case 'js':
-              analysis = `**Code Analysis Report**\n\n*File*: ${filename}\n\n` +
-                  `This JavaScript file appears to contain a simple greeting function. Here are some observations:\n\n` +
-                  `- The code defines a \`greet()\` function that logs a message to the console\n` +
-                  `- The function is immediately invoked after definition\n` +
-                  `- Consider adding error handling and input validation if this function will be used in production\n` +
-                  `- The code follows basic JavaScript syntax conventions\n\n` +
-                  `**Recommendations**:\n` +
-                  `1. Add JSDoc comments for better documentation\n` +
-                  `2. Consider exporting the function if it will be used by other modules\n` +
-                  `3. Add unit tests to verify the expected behavior`;
-              break;
-            case 'css':
-              analysis = `**CSS Analysis Report**\n\n*File*: ${filename}\n\n` +
-                  `This CSS file contains basic styling rules. Key observations:\n\n` +
-                  `- Sets the font family to Arial with fallback to sans-serif\n` +
-                  `- Resets margin and padding on the body element\n` +
-                  `- The rules are simple and well-formatted\n\n` +
-                  `**Recommendations**:\n` +
-                  `1. Consider using CSS variables for maintainability\n` +
-                  `2. Add responsive design rules for different screen sizes\n` +
-                  `3. Organize rules by component or section for larger projects`;
-              break;
-            case 'json':
-              analysis = `**JSON Analysis Report**\n\n*File*: ${filename}\n\n` +
-                  `This JSON file appears to be a package configuration file. Observations:\n\n` +
-                  `- Contains standard package.json fields (name, version, description, main)\n` +
-                  `- The structure is valid and properly formatted\n` +
-                  `- Follows common npm package conventions\n\n` +
-                  `**Recommendations**:\n` +
-                  `1. Consider adding \`scripts\` section for common tasks\n` +
-                  `2. Add \`keywords\` and \`repository\` fields for better discoverability\n` +
-                  `3. Specify \`engines\` if your package requires specific Node.js versions`;
-              break;
-            default:
-              analysis = `**File Analysis Report**\n\n*File*: ${filename}\n\n` +
-                  `This is a general analysis of the file content. Key points:\n\n` +
-                  `- The file appears to be well-structured\n` +
-                  `- Content follows standard formatting for this file type\n` +
-                  `- No obvious issues detected in the file structure\n\n` +
-                  `**Recommendations**:\n` +
-                  `1. Consider adding documentation comments if applicable\n` +
-                  `2. Ensure consistent formatting throughout the file\n` +
-                  `3. Verify that the content meets project standards`;
-          }
-
-          resolve(analysis);
-        }, 1500); // Simulate AI processing time
-      });
     };
 
     const copyToClipboard = async () => {
@@ -470,6 +379,10 @@ export default {
       }
     };
 
+    onMounted(() => {
+      fetchRepositoryData();
+    });
+
     return {
       branches,
       currentBranch,
@@ -485,12 +398,12 @@ export default {
       aiAnalysisResult,
       activePanels,
       formattedAiResult,
+      isLoadingRepoData,
       handleBranchChange,
       handleNodeClick,
       getFileIcon,
       getLanguageClass,
       highlightCode,
-      fetchFileContent,
       copyToClipboard,
       analyzeWithAI,
       copyAnalysisResult
@@ -568,12 +481,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.file-name {
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--el-text-color-primary);
 }
 
 .file-path {
@@ -685,12 +592,6 @@ code {
 .line-numbers-rows > span:before {
   color: var(--el-text-color-placeholder);
   padding-right: 8px;
-}
-
-/* AI Analysis Panel Styles */
-.ai-analysis-panel {
-  border-top: 1px solid var(--el-border-color-light);
-  margin-top: auto;
 }
 
 .ai-result-content {
