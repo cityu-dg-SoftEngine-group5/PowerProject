@@ -80,6 +80,12 @@
             >
               <PaperAirplaneIcon class="icon" />
             </button>
+            <button 
+              class="get-text-button"
+              @click="getCodeFromServer"
+            >
+              <DocumentTextIcon class="icon" />
+            </button>
           </div>
         </div>
       </div>
@@ -96,7 +102,8 @@ import {
   PlusIcon,
   PaperClipIcon,
   DocumentIcon,
-  XMarkIcon
+  XMarkIcon,
+  DocumentTextIcon
 } from '@heroicons/vue/24/outline'
 import ChatMessage from '../components/ChatMessage.vue'
 import { chatAPI } from '../services/api'
@@ -388,6 +395,21 @@ const removeFile = (index) => {
   selectedFiles.value = selectedFiles.value.filter((_, i) => i !== index)
   if (selectedFiles.value.length === 0) {
     fileInput.value.value = ''  // 清空文件输入
+  }
+}
+
+// 添加获取代码的函数
+const getCodeFromServer = async () => {
+  try {
+    const response = await fetch('http://localhost:10098/sendtoweb')
+    const data = await response.json()
+    const displayContent = "当前行代码：\n" + data.line + "\n\n" +
+                          "选中文本：\n" + (data.codes || '[无选中内容]')
+    userInput.value = displayContent
+    adjustTextareaHeight()
+  } catch (error) {
+    console.error('获取代码失败:', error)
+    userInput.value = '获取代码失败，请稍后重试'
   }
 }
 
@@ -692,6 +714,35 @@ onMounted(() => {
             height: 1.25rem;
           }
         }
+
+        .get-text-button {
+          width: 2.5rem;
+          height: 2.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          border-radius: 0.75rem;
+          background: #28a745;
+          color: white;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          &:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-1px);
+          }
+          
+          &:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+          }
+          
+          .icon {
+            width: 1.25rem;
+            height: 1.25rem;
+          }
+        }
       }
     }
   }
@@ -805,6 +856,14 @@ onMounted(() => {
           color: #fff;
         }
       }
+    }
+  }
+
+  .get-text-button {
+    background: #28a745;
+    
+    &:hover:not(:disabled) {
+      background: #218838;
     }
   }
 }
