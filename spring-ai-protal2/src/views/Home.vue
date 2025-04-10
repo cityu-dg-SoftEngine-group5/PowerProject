@@ -23,11 +23,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useDark } from '@vueuse/core'
-import { 
-  ChatBubbleLeftRightIcon,
-  HeartIcon,
-  UserGroupIcon,
-  DocumentTextIcon
+import {
+  ChatBubbleOvalLeftEllipsisIcon,
+  CodeBracketSquareIcon,
+  ClipboardDocumentListIcon,
+  ArrowPathRoundedSquareIcon
 } from '@heroicons/vue/24/outline'
 
 const isDark = useDark()
@@ -38,28 +38,28 @@ const aiApps = ref([
     title: 'AI Chat',
     description: '',
     route: '/ai-chat',
-    icon: ChatBubbleLeftRightIcon
+    icon: ChatBubbleOvalLeftEllipsisIcon
   },
   {
     id: 2,
     title: 'Project',
     description: '',
     route: '/code',
-    icon: ChatBubbleLeftRightIcon
+    icon: CodeBracketSquareIcon
   },
   {
     id: 3,
     title: 'TodoList',
     description: '',
     route: '/todolist',
-    icon: ChatBubbleLeftRightIcon
+    icon: ClipboardDocumentListIcon
   },
   {
     id: 4,
     title: 'GitLog',
     description: '',
     route: '/git',
-    icon: ChatBubbleLeftRightIcon
+    icon: ArrowPathRoundedSquareIcon
   }
 ])
 </script>
