@@ -91,12 +91,12 @@
                     </el-button>
                   </div>
                 </div>
-                <div v-if="!isBinaryFile" class="code-wrapper">
-                  <pre><code ref="codeBlock" :class="getLanguageClass()"></code></pre>
-                </div>
-                <div v-else class="binary-file">
+                <div v-if="isBinaryFile" class="binary-file">
                   <el-icon :size="48"><document /></el-icon>
                   <p>Binary file not displayed</p>
+                </div>
+                <div v-else class="code-wrapper">
+                  <pre><code ref="codeBlock" :class="getLanguageClass()"></code></pre>
                 </div>
               </div>
               <div v-else class="empty-state1">
@@ -153,8 +153,18 @@ import 'prismjs/themes/prism.css';
 import 'prismjs/plugins/line-numbers/prism-line-numbers';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.css';
 import request from '../services/request.js'
+import { marked } from 'marked';
+import hljs from 'highlight.js';
+import DOMPurify from 'dompurify';
 
-
+marked.setOptions({
+  highlight: function (code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(lang, code).value;
+    }
+    return hljs.highlightAuto(code).value;
+  }
+})
 // Element Plus icons
 import {
   ArrowDown,
@@ -199,6 +209,7 @@ export default {
     const isLoadingRepoData = ref(false);
     const isAnalyzing = ref(false);
     const fileContents = ref({});
+    const aiAnalysisResults = ref({})
     const codeBlock = ref(null);
     const aiAnalysisResult = ref(null);
     const activePanels = ref(['code']);
@@ -223,11 +234,7 @@ export default {
     const formattedAiResult = computed(() => {
       if (!aiAnalysisResult.value) return '';
       // Simple markdown-like formatting
-      return aiAnalysisResult.value
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // bold
-          .replace(/\*(.*?)\*/g, '<em>$1</em>') // italic
-          .replace(/`(.*?)`/g, '<code>$1</code>') // code
-          .replace(/\n/g, '<br>'); // line breaks
+      return DOMPurify.sanitize(marked.parse(aiAnalysisResult.value))
     });
 
     const fetchRepositoryData = async () => {
@@ -259,10 +266,10 @@ export default {
     const handleNodeClick = async (data) => {
       if (data.type === 'file') {
         selectedFile.value = data;
-        aiAnalysisResult.value = null;
         activePanels.value = ['code'];
-
         const cacheKey = `${currentBranch.value}-${data.path}`;
+
+        aiAnalysisResult.value = aiAnalysisResults.value[cacheKey];
         if (fileContents.value[cacheKey] === 'Error loading file content' || !fileContents.value[cacheKey]) {
           isLoading.value = true;
           try {
@@ -286,6 +293,11 @@ export default {
             highlightCode();
           }
         });
+      }
+      else if (data.type === 'binary') {
+        selectedFile.value = data;
+        aiAnalysisResult.value = null;
+        activePanels.value = ['code'];
       }
     };
 
@@ -343,6 +355,10 @@ export default {
         if (response.data.status !== 0)
           throw Error("server status failed");
         aiAnalysisResult.value = response.data.content;
+
+        const cacheKey = `${currentBranch.value}-${selectedFile.value.path}`;
+        aiAnalysisResults.value[cacheKey] = aiAnalysisResult.value;
+
         activePanels.value = ['analysis'];
       } catch (error) {
         console.error('AI analysis failed:', error);
