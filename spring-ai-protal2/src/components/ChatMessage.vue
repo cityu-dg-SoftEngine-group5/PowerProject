@@ -20,6 +20,9 @@
           <DocumentDuplicateIcon v-if="!copied" class="copy-icon" />
           <CheckIcon v-else class="copy-icon copied" />
         </button>
+        <button class="send-button" @click="sendToServer" :title="sendButtonTitle">
+          <PaperAirplaneIcon class="send-icon" />
+        </button>
       </div>
     </div>
   </div>
@@ -29,13 +32,21 @@
 import { computed, onMounted, nextTick, ref, watch } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import { UserCircleIcon, ComputerDesktopIcon, DocumentDuplicateIcon, CheckIcon } from '@heroicons/vue/24/outline'
+import { 
+  UserCircleIcon, 
+  ComputerDesktopIcon, 
+  DocumentDuplicateIcon, 
+  CheckIcon,
+  PaperAirplaneIcon 
+} from '@heroicons/vue/24/outline'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
 
 const contentRef = ref(null)
 const copied = ref(false)
+const sent = ref(false)
 const copyButtonTitle = computed(() => copied.value ? '已复制' : '复制内容')
+const sendButtonTitle = computed(() => sent.value ? '已发送' : '发送到服务器')
 
 // 配置 marked
 marked.setOptions({
@@ -116,15 +127,32 @@ const processContent = (content) => {
         </svg>
       `
       
+      // 添加插入按钮
+      const insertBtn = document.createElement('button')
+      insertBtn.className = 'code-insert-button'
+      insertBtn.title = '获取代码'
+      insertBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="code-insert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+      `
+      
       // 添加成功消息
       const successMsg = document.createElement('div')
       successMsg.className = 'copy-success-message'
       successMsg.textContent = '已复制!'
       
+      // 添加插入成功消息
+      const insertSuccessMsg = document.createElement('div')
+      insertSuccessMsg.className = 'insert-success-message'
+      insertSuccessMsg.textContent = '已插入!'
+      
       // 组装结构
       wrapper.appendChild(copyBtn)
+      wrapper.appendChild(insertBtn)
       wrapper.appendChild(pre.cloneNode(true))
       wrapper.appendChild(successMsg)
+      wrapper.appendChild(insertSuccessMsg)
       
       // 替换原始的 pre 元素
       pre.parentNode.replaceChild(wrapper, pre)
@@ -140,22 +168,24 @@ const processedContent = computed(() => {
   return processContent(props.message.content)
 })
 
-// 为代码块添加复制功能
-const setupCodeBlockCopyButtons = () => {
+// 为代码块添加复制和插入功能
+const setupCodeBlockButtons = () => {
   if (!contentRef.value) return;
   
   const codeBlocks = contentRef.value.querySelectorAll('.code-block-wrapper');
   codeBlocks.forEach(block => {
     const copyButton = block.querySelector('.code-copy-button');
+    const insertButton = block.querySelector('.code-insert-button');
     const codeElement = block.querySelector('code');
     const successMessage = block.querySelector('.copy-success-message');
+    const insertSuccessMessage = block.querySelector('.insert-success-message');
     
     if (copyButton && codeElement) {
       // 移除旧的事件监听器
       const newCopyButton = copyButton.cloneNode(true);
       copyButton.parentNode.replaceChild(newCopyButton, copyButton);
       
-      // 添加新的事件监听器
+      // 添加新的复制事件监听器
       newCopyButton.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -175,10 +205,48 @@ const setupCodeBlockCopyButtons = () => {
         }
       });
     }
+
+    if (insertButton && codeElement) {
+      // 移除旧的事件监听器
+      const newInsertButton = insertButton.cloneNode(true);
+      insertButton.parentNode.replaceChild(newInsertButton, insertButton);
+      
+      // 添加新的插入事件监听器
+      newInsertButton.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          const code = codeElement.textContent || '';
+          const response = await fetch('http://localhost:10098/getfromweb', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ code: code })
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            // 显示插入成功消息
+            if (insertSuccessMessage) {
+              insertSuccessMessage.classList.add('visible');
+              setTimeout(() => {
+                insertSuccessMessage.classList.remove('visible');
+              }, 2000);
+            }
+          } else {
+            alert('插入失败');
+          }
+        } catch (err) {
+          console.error('插入代码失败:', err);
+          alert('插入失败，请稍后重试');
+        }
+      });
+    }
   });
 }
 
-// 在内容更新后手动应用高亮和设置复制按钮
+// 在内容更新后手动应用高亮和设置按钮
 const highlightCode = async () => {
   await nextTick()
   if (contentRef.value) {
@@ -186,8 +254,8 @@ const highlightCode = async () => {
       hljs.highlightElement(block)
     })
     
-    // 设置代码块复制按钮
-    setupCodeBlockCopyButtons()
+    // 设置代码块按钮
+    setupCodeBlockButtons()
   }
 }
 
@@ -223,6 +291,42 @@ const copyContent = async () => {
     }, 3000);
   } catch (err) {
     console.error('复制失败:', err);
+  }
+}
+
+// 发送内容到服务器
+const sendToServer = async () => {
+  try {
+    // 获取纯文本内容
+    let textToSend = props.message.content;
+    
+    // 如果是AI回复，需要去除HTML标签
+    if (!isUser.value && contentRef.value) {
+      // 创建临时元素来获取纯文本
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = processedContent.value;
+      textToSend = tempDiv.textContent || tempDiv.innerText || '';
+    }
+    
+    // 发送请求
+    const response = await fetch('http://101.37.229.131:8080/todos/generate', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      sent.value = true;
+      // 3秒后重置发送状态
+      setTimeout(() => {
+        sent.value = false;
+      }, 3000);
+    } else {
+      console.error('发送失败:', response.status);
+    }
+  } catch (err) {
+    console.error('发送失败:', err);
   }
 }
 
@@ -350,7 +454,8 @@ const formatTime = (timestamp) => {
         color: #666;
       }
       
-      .copy-button {
+      .copy-button,
+      .send-button {
         display: flex;
         align-items: center;
         gap: 0.25rem;
@@ -361,14 +466,15 @@ const formatTime = (timestamp) => {
         padding: 0.25rem 0.5rem;
         border-radius: 4px;
         cursor: pointer;
-        margin-right: auto;
+        margin-right: 0.5rem;
         transition: background-color 0.2s;
         
         &:hover {
           background-color: rgba(0, 0, 0, 0.05);
         }
         
-        .copy-icon {
+        .copy-icon,
+        .send-icon {
           width: 14px;
           height: 14px;
           
@@ -595,7 +701,8 @@ const formatTime = (timestamp) => {
           color: #999;
         }
         
-        .copy-button {
+        .copy-button,
+        .send-button {
           color: #999;
           
           &:hover {
@@ -787,13 +894,13 @@ const formatTime = (timestamp) => {
     border-radius: 6px;
     overflow: hidden;
     
-    .code-copy-button {
+    .code-copy-button,
+    .code-insert-button {
       position: absolute;
       top: 0.5rem;
-      right: 0.5rem;
       background: rgba(255, 255, 255, 0.1);
       border: none;
-      color: #e6e6e6;
+      color: #9bd3d3;
       cursor: pointer;
       padding: 0.25rem;
       border-radius: 4px;
@@ -808,33 +915,30 @@ const formatTime = (timestamp) => {
         background-color: rgba(255, 255, 255, 0.2);
       }
       
-      .code-copy-icon {
-        width: 16px;
-        height: 16px;
+      .code-copy-icon,
+      .code-insert-icon {
+        width: 35px;
+        height: 35px;
       }
     }
     
-    &:hover .code-copy-button {
+    .code-copy-button {
+      right: 3.5rem;
+    }
+
+    .code-insert-button {
+      right: 0.5rem;
+    }
+    
+    &:hover .code-copy-button,
+    &:hover .code-insert-button {
       opacity: 0.8;
     }
     
-    pre {
-      margin: 0;
-      padding: 1rem;
-      background: #1e1e1e;
-      overflow-x: auto;
-      
-      code {
-        background: transparent;
-        padding: 0;
-        font-family: ui-monospace, monospace;
-      }
-    }
-    
-    .copy-success-message {
+    .copy-success-message,
+    .insert-success-message {
       position: absolute;
       top: 0.5rem;
-      right: 0.5rem;
       background: rgba(74, 222, 128, 0.9);
       color: white;
       padding: 0.25rem 0.5rem;
@@ -851,13 +955,22 @@ const formatTime = (timestamp) => {
         transform: translateY(0);
       }
     }
+
+    .copy-success-message {
+      right: 3.5rem;
+    }
+
+    .insert-success-message {
+      right: 0.5rem;
+    }
   }
 }
 
 .dark {
   .markdown-content {
     :deep(.code-block-wrapper) {
-      .code-copy-button {
+      .code-copy-button,
+      .code-insert-button {
         background: rgba(255, 255, 255, 0.05);
         
         &:hover {
