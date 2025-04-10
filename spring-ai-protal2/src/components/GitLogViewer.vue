@@ -91,13 +91,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { User, Clock } from '@element-plus/icons-vue';
 import RelationGraph from 'relation-graph/vue3';
+import request from '../services/request.js'
+import {requestApiCollection} from "../services/api_others.js";
+import {ElMessage} from "element-plus";
 
-import {mockCommitData} from "./git-data.js";
-
-const commitData = mockCommitData;
+const commitData = ref([]);
 const currentBranch = ref('main');
 
 // Color palette for branches
@@ -130,14 +131,15 @@ const graphOptions = ref({
   layouts: [
     {
       label: "中心",
-      layoutName: "force",
+      layoutName: "tree",
       centerOffset_x: 0,
       centerOffset_y: 0,
-      distance_coefficient: 1,
-      from: "top",
-      levelDistance: "",
-      min_per_width: 100,
-      max_per_width: 500,
+      distance_coefficient: 0.8,
+      layoutDirection: "h",
+      from: "left",
+      levelDistance: "250",
+      min_per_width: 80,
+      max_per_width: 300,
       min_per_height: 300,
       max_per_height: 500,
       maxLayoutTimes: 300,
@@ -178,11 +180,11 @@ const graphData = computed(() => {
   const commitMap = {};
 
   // 创建提交映射以便快速查找
-  commitData.forEach(commit => {
+  commitData.value.forEach(commit => {
     commitMap[commit.hash] = commit;
   });
 
-  commitData.forEach(commit => {
+  commitData.value.forEach(commit => {
     const isCurrentBranch = commit.branches?.includes(currentBranch);
     const primaryBranch = commit.branches?.[0] || '';
     const branchColor = primaryBranch ? getBranchColor(primaryBranch) : '#909399';
@@ -253,8 +255,12 @@ const graphData = computed(() => {
       }
     });
   });
+  let res = { nodes, links: lines };
 
-  return { nodes, links: lines };
+  if (nodes.slice(-1)[0]) {
+    res.rootId = nodes.slice(-1)[0].id;
+  }
+  return res;
 });
 
 const shortenAuthorName = (author) => {
@@ -312,10 +318,32 @@ const onNodeClick = (node) => {
   dialogVisible.value = true;
 };
 
+watch(graphData, () => {
+  if (graphRef.value) {
+    graphRef.value.setOptions(graphOptions.value);
+    graphRef.value.setJsonData(graphData.value);
+    graphRef.value.refresh();
+  }
+});
+
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleString();
 };
+
+const fetchGitLog = async () => {
+  try {
+    const response = await request.get(requestApiCollection.getGitLogApi, {
+      params: {
+        repoPath: '/usr/ai_pms/PowerProject'
+      }
+    });
+    commitData.value = response.data;
+  } catch (error) {
+    console.error('Error fetching GitLog data:', error);
+    ElMessage.error('Failed to load GitLog data');
+  }
+}
 
 onMounted(() => {
   if (graphRef.value) {
@@ -323,6 +351,7 @@ onMounted(() => {
     graphRef.value.setJsonData(graphData.value);
     graphRef.value.refresh();
   }
+  fetchGitLog();
 });
 </script>
 
@@ -340,6 +369,7 @@ onMounted(() => {
   border: 1px solid #ebeef5;
   border-radius: 4px;
   overflow: hidden;
+  contain: strict;
 }
 
 .commit-details {
@@ -362,7 +392,7 @@ onMounted(() => {
 .detail-value {
   flex: 1;
   color: #303133;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .message .detail-value {
@@ -372,52 +402,64 @@ onMounted(() => {
 .commit-node {
   width: 100%;
   height: 100%;
+  will-change: transform;
+  transition: box-shadow 0.15s ease-out;
+  background-color: #ffffff;
 }
 
 .commit-node:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .node-content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  font-weight: 500;
 }
 
 .hash-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 }
 
 .hash-row :deep(.el-tag) {
   border: none;
   font-family: monospace;
-  font-weight: bold;
+  font-weight: 600;
+  padding: 0 6px;
+  font-size: 12px;
 }
 
 .author-row, .time-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--el-text-color-primary);
+  line-height: 1.3;
+  font-weight: 500;
 }
 
 .author-row .author-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
+  max-width: 110px;
+  font-weight: 500;
 }
 
 .time-row .time-text {
   cursor: help;
+  font-size: 11px;
 }
 
 .branch-tag {
   border: none;
   font-size: 10px;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  font-weight: 500;
 }
 </style>
