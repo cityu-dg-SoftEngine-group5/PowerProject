@@ -340,7 +340,7 @@ export default {
             filepath: selectedFile.value.path
           }
         });
-        if (response.data.status === 0)
+        if (response.data.status !== 0)
           throw Error("server status failed");
         aiAnalysisResult.value = response.data.content;
         activePanels.value = ['analysis'];
