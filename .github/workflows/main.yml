@@ -33,7 +33,7 @@ jobs:
       working-directory: ./powerproject  # 确保在此目录打包
 
     - name: Upload VSIX
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: extension.vsix
         path: powerproject/*.vsix  # 匹配子目录中的产物
