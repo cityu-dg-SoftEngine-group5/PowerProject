@@ -44,10 +44,9 @@ export class VSCodeHttpServer {
                 req.on('end', () => {
                     try {
                         const { code } = JSON.parse(body);
-                        const currentCode = editor.selection.active;
-                        const insertPosition = new vscode.Position(currentCode.line + 1, 0);
+                        const selection = editor.selection;
                         editor.edit(editBuilder => {
-                            editBuilder.insert(insertPosition, code + '\n');
+                            editBuilder.replace(selection, code);
                         }).then(success => {
                             res.setHeader('Content-Type', 'application/json');
                             res.end(JSON.stringify({ success }));
