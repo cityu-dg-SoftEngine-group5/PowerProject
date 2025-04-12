@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+
+    # 关键修改：所有操作切换到 powerproject 目录
+    - name: Install Dependencies
+      run: npm install
+      working-directory: ./powerproject  # 指定工作目录
+
+    - name: Run Tests
+      run: npm test
+      working-directory: ./powerproject
+
+    - name: Package Extension
+      run: npx vsce package
+      working-directory: ./powerproject  # 确保在此目录打包
+
+    - name: Upload VSIX
+      uses: actions/upload-artifact@v3
+      with:
+        name: extension.vsix
+        path: powerproject/*.vsix  # 匹配子目录中的产物
