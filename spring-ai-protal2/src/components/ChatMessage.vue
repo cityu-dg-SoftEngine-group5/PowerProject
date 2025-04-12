@@ -310,11 +310,8 @@ const sendToServer = async () => {
     }
     
     // 发送请求
-    const response = await fetch(`http://101.37.229.131:8080/todos/generate?message=${textToSend}`, {
+    const response = await fetch(`http://101.37.229.131:8080/todos/generate2?message=${textToSend}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
     });
 
     if (response.ok) {
