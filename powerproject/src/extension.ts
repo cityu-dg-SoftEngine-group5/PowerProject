@@ -8,10 +8,12 @@ import { AITerminal } from './core/aiterminal';
 import { TerminalService } from './core/terminalservice';
 import { terminalAndfile } from './core/terminalAndfile';
 let webServer: VSCodeHttpServer | null = null;
+let extensionContext: vscode.ExtensionContext;
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	extensionContext = context;
 	
 	const webServerPort = vscode.workspace.getConfiguration('powerproject').get('webServerPort', 10098);
 	webServer = new VSCodeHttpServer(webServerPort);
@@ -52,6 +54,11 @@ export function activate(context: vscode.ExtensionContext) {
 		await terminalAndfile();
 	});
 	context.subscriptions.push(terminalAndfileCommand);
+
+	// 导出获取上下文的函数，供其他模块使用
+	return {
+		getExtensionContext: () => extensionContext
+	};
 }
 
 // This method is called when your extension is deactivated

@@ -2,6 +2,7 @@ import { ApiConfiguration } from "../shared/api";
 import { ApiStream } from "./transform/stream";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { ApiHandler, buildApiHandler } from "./index";
+import { logHistory } from '../utils/historyLogger';
 
 
 // export async function generateCode(userMessage: string, config: {
@@ -56,6 +57,9 @@ export async function generateCode(systemPrompt: string, messageParams: Anthropi
       fullText += chunk.text;
     }
   }
+  const userMessage = messageParams.find(msg => msg.role === 'user')?.content as string || '';
+
+  await logHistory(userMessage, systemPrompt, fullText);
 
   return fullText;
 }

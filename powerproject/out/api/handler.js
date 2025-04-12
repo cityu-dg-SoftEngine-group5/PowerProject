@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateCode = generateCode;
+const historyLogger_1 = require("../utils/historyLogger");
 // export async function generateCode(userMessage: string, config: {
 //   apiProvider: "openai" | "anthropic";
 //   apiKey: string;
@@ -43,6 +44,8 @@ async function generateCode(systemPrompt, messageParams, api_handler) {
             fullText += chunk.text;
         }
     }
+    const userMessage = messageParams.find(msg => msg.role === 'user')?.content || '';
+    await (0, historyLogger_1.logHistory)(userMessage, systemPrompt, fullText);
     return fullText;
 }
 //# sourceMappingURL=handler.js.map

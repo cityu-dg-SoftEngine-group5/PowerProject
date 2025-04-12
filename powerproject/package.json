@@ -56,6 +56,11 @@
           "type": "number",
           "default": 10098,
           "description": "The port to use for the web server"
+        },
+        "powerproject.enableHistoryLogging": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable logging of code completion requests and responses for future recall"
         }
       }
     },
