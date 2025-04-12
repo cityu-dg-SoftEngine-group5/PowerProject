@@ -41,6 +41,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
+import request from '../services/request.js'
 
 const contentRef = ref(null)
 const copied = ref(false)
@@ -309,13 +310,13 @@ const sendToServer = async () => {
     }
     
     // 发送请求
-    const response = await fetch('http://101.37.229.131:8080/todos/generate', {
+    const response = await fetch(`http://101.37.229.131:8080/todos/generate?message=${textToSend}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
       }
     });
-    
+
     if (response.ok) {
       sent.value = true;
       // 3秒后重置发送状态
@@ -329,7 +330,6 @@ const sendToServer = async () => {
     console.error('发送失败:', err);
   }
 }
-
 // 监听内容变化
 watch(() => props.message.content, () => {
   if (!isUser.value) {

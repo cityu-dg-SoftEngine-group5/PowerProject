@@ -403,8 +403,7 @@ const getCodeFromServer = async () => {
   try {
     const response = await fetch('http://localhost:10098/sendtoweb')
     const data = await response.json()
-    const displayContent = "当前行代码：\n" + data.line + "\n\n" +
-                          "选中文本：\n" + (data.codes || '[无选中内容]')
+    const displayContent = "选中文本：\n" + (data.codes || '[无选中内容]')
     userInput.value = displayContent
     adjustTextareaHeight()
   } catch (error) {
