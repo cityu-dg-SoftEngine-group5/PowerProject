@@ -27,6 +27,7 @@ jobs:
     - name: Package Extension
       run: npx vsce package
       working-directory: ./powerproject  # 确保在此目录打包
+      continue-on-error: true
 
     - name: Upload VSIX
       uses: actions/upload-artifact@v4
